@@ -139,7 +139,7 @@ def main():
         )
         send_kakao(access_token, message)
     else:
-        print(f"60점 미만 → 알림 없음")
+        print(f"60점 미만(ㅜㅜ) → 알림 없음")
 
 
 if __name__ == "__main__":
