@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Run monitor 
+      - name: Run monitor
         env:
           KAKAO_TOKEN: ${{ secrets.KAKAO_TOKEN }}
         run: python monitor.py
