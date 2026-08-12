@@ -1,10 +1,9 @@
 import requests
 import json
 import os
-import re
 
 MODEL = "claude-opus-4.6"
-BADGE_URL = f"https://rs.igx.kr/badge/{MODEL}"
+API_URL = "https://rs.igx.kr/api/statistics"
 
 KAKAO_REST_API_KEY = os.environ.get("KAKAO_REST_API_KEY")
 KAKAO_CLIENT_SECRET = os.environ.get("KAKAO_CLIENT_SECRET")
@@ -47,22 +46,28 @@ def calc_score(tps, latency):
     return int(min(100, max(0, total)))
 
 
-def fetch_score_from_badge():
-    res = requests.get(BADGE_URL, timeout=10)
-    if res.status_code != 200:
-        raise ValueError(f"뱃지 요청 실패: {res.status_code}")
-    svg = res.text
-    latency_match = re.search(r'대기\s*([\d.]+)초', svg)
-    tps_match = re.search(r'([\d.]+)토큰/초', svg)
-    if not latency_match or not tps_match:
-        raise ValueError(f"파싱 실패. SVG 내용: {svg[:200]}")
-    latency_ms = float(latency_match.group(1)) * 1000
-    tps = float(tps_match.group(1))
-    return tps, latency_ms
+def get_current_score():
+    res = requests.get(API_URL, timeout=10)
+    res.raise_for_status()
+    data = res.json()
+
+    model_data = data.get(MODEL, [])
+    if not model_data:
+        raise ValueError(f"{MODEL} 데이터 없음")
+
+    valid = [e for e in model_data if not e.get("failure") and e.get("tps") is not None and e.get("latency") is not None]
+    if not valid:
+        raise ValueError("유효한 데이터 없음")
+
+    latest = sorted(valid, key=lambda e: e["time"])[-1]
+
+    tps = latest["tps"]
+    latency = latest["latency"]
+    score = calc_score(tps, latency)
+    return score, tps, latency, latest["time"]
 
 
 def refresh_access_token():
-    """리프레시 토큰으로 새 액세스 토큰 발급"""
     res = requests.post(
         "https://kauth.kakao.com/oauth/token",
         data={
@@ -78,7 +83,7 @@ def refresh_access_token():
 
     data = res.json()
     access_token = data["access_token"]
-    new_refresh_token = data.get("refresh_token")  # 갱신되면 같이 옴 (없을 수도 있음)
+    new_refresh_token = data.get("refresh_token")
 
     if new_refresh_token:
         print("⚠️ 새 리프레시 토큰 발급됨! GitHub Secret KAKAO_REFRESH_TOKEN 업데이트 필요:")
@@ -118,9 +123,8 @@ def get_label(score):
 
 def main():
     print(f"모니터링 시작: {MODEL}")
-    tps, latency = fetch_score_from_badge()
-    score = calc_score(tps, latency)
-    print(f"현재 점수: {score}점 (TPS: {tps:.1f}, Latency: {latency:.0f}ms)")
+    score, tps, latency, time_str = get_current_score()
+    print(f"현재 점수🌟: {score}점 (TPS: {tps:.1f}, Latency: {latency:.0f}ms) - {time_str}")
 
     emoji, label = get_label(score)
 
