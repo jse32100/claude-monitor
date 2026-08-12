@@ -81,8 +81,8 @@ def get_label(score):
         return "🔥", "70점 이상"
     elif score >= 65:
         return "✅", "65점 이상"
-    elif score >= 30:
-        return "📊", "30점 이상"
+    elif score >= 60:
+        return "📊", "60점 이상"
     else:
         return None, None
 
