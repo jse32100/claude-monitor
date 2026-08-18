@@ -3,6 +3,10 @@ name: Opus 5 Score Monitor
 on:
   workflow_dispatch:
 
+concurrency:
+  group: opus5-monitor
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
