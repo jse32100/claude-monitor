@@ -5,7 +5,7 @@ from common import get_band, load_previous_band, save_band, send_discord, descri
 
 MODEL = "claude-opus-4.6"
 API_URL = "https://rs.igx.kr/api/statistics"
-THRESHOLD = 40
+THRESHOLD = 60
 STATE_PATH = "state_opus46.json"
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_OPUS46")
 
