@@ -3,6 +3,10 @@ name: Opus 4.6 Score Monitor
 on:
   workflow_dispatch:
 
+concurrency:
+  group: opus46-monitor
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
