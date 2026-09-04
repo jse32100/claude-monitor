@@ -1,0 +1,40 @@
+name: Fable 5 Score Monitor
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: fable5-monitor
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run monitor
+        env:
+          DISCORD_WEBHOOK_FABLE5: ${{ secrets.DISCORD_WEBHOOK_FABLE5 }}
+        run: python monitor_fable5.py
+
+      - name: Commit updated state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add state_fable5.json
+          git diff --staged --quiet || git commit -m "chore: update fable5 state"
+          git pull --rebase
+          git push
