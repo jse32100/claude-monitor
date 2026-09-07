@@ -6,7 +6,7 @@ from common import get_band, load_previous_band, save_band, send_discord, descri
 MODEL_ID = "fable5"
 MODEL_LABEL = "Claude Fable 5"
 API_URL = "https://claude-radiosonde.chyoyam.chatgpt.site/api/v1/status"
-THRESHOLD = 10
+THRESHOLD = 80
 STATE_PATH = "state_fable5.json"
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_FABLE5")
 
