@@ -4,7 +4,7 @@ from common import get_band, load_previous_band, save_band, send_discord, descri
 from igx_api import fetch_model_state
 
 MODEL = "claude-opus-4.6"
-THRESHOLD = 60
+THRESHOLD = 40
 STATE_PATH = "state_opus46.json"
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_OPUS46")
 
