@@ -1,0 +1,40 @@
+name: Opus 5.5 Score Monitor
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: opus55-monitor
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run monitor
+        env:
+          OPUS55_ALARM: ${{ secrets.OPUS55_ALARM }}
+        run: python monitor_opus55.py
+
+      - name: Commit updated state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add state_opus55.json
+          git diff --staged --quiet || git commit -m "chore: update opus55 state"
+          git pull --rebase
+          git push
