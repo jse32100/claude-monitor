@@ -1,37 +1,19 @@
 import os
-import requests
 
 from common import get_band, load_previous_band, save_band, send_discord, describe_transition
+from igx_api import fetch_model_state
 
-MODEL_ID = "fable5"
+MODEL = "claude-fable-5"
 MODEL_LABEL = "Claude Fable 5"
-API_URL = "https://claude-radiosonde.chyoyam.chatgpt.site/api/v1/status"
-THRESHOLD = 55
+THRESHOLD = 60
 STATE_PATH = "state_fable5.json"
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_FABLE5")
 
 
-def get_current_score():
-    res = requests.get(API_URL, timeout=10)
-    res.raise_for_status()
-    data = res.json()
-
-    models = data.get("models", [])
-    target = next((m for m in models if m.get("id") == MODEL_ID), None)
-    if target is None:
-        raise ValueError(f"{MODEL_ID} 데이터 없음")
-
-    score = target["experience_score"]["value"]
-    tps = target["metrics"]["tps"]
-    ttft_ms = target["metrics"]["ttft_ms"]
-    measured_at = target.get("measured_at")
-    return score, tps, ttft_ms, measured_at
-
-
 def main():
     print(f"모니터링 시작: {MODEL_LABEL}")
-    score, tps, ttft_ms, measured_at = get_current_score()
-    print(f"현재 점수: {score}점 (TPS: {tps:.1f}, TTFT: {ttft_ms:.0f}ms) - {measured_at}")
+    score, tps, latency, measured_at, status = fetch_model_state(MODEL)
+    print(f"현재 점수: {score}점 (TPS: {tps:.1f}, Latency: {latency:.0f}ms, {status}) - {measured_at}")
 
     prev_band = load_previous_band(STATE_PATH)
     new_band = get_band(score, THRESHOLD)
@@ -42,8 +24,8 @@ def main():
             f"{emoji} **{MODEL_LABEL}** {headline}\n\n"
             f"📊 현재 점수: **{score}점** (구간: {new_band})\n"
             f"⚡ 속도: {tps:.1f} T/s\n"
-            f"⏱ 첫 응답 시간: {ttft_ms / 1000:.2f}초\n\n"
-            f"확인하기: https://claude-radiosonde.chyoyam.chatgpt.site"
+            f"⏱ 응답 시간: {latency / 1000:.2f}초\n\n"
+            f"확인하기: https://rs.igx.kr"
         )
         if DISCORD_WEBHOOK_URL:
             send_discord(DISCORD_WEBHOOK_URL, message)
